@@ -1,10 +1,12 @@
 import { cookies } from "next/headers";
 import { desc } from "drizzle-orm";
 import { db } from "@/db";
-import { attempts } from "@/db/schema";
+import { attempts, courseProgress } from "@/db/schema";
+import { courses } from "@/lib/courses-data";
 import { ADMIN_SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 import { AdminLoginForm } from "@/components/AdminLoginForm";
 import { AdminTable } from "@/components/AdminTable";
+import { AdminInProgressTable } from "@/components/AdminInProgressTable";
 
 export default async function AdminPage() {
   const cookieStore = await cookies();
@@ -19,10 +21,17 @@ export default async function AdminPage() {
     );
   }
 
-  const rows = await db
-    .select()
-    .from(attempts)
-    .orderBy(desc(attempts.createdAt));
+  const [rows, progressRows] = await Promise.all([
+    db.select().from(attempts).orderBy(desc(attempts.createdAt)),
+    db.select().from(courseProgress).orderBy(desc(courseProgress.updatedAt)),
+  ]);
+
+  const completedNames = new Set(
+    rows.map((r) => r.fullName.trim().toLowerCase())
+  );
+  const inProgressRows = progressRows.filter(
+    (p) => !completedNames.has(p.fullName.trim().toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -42,7 +51,7 @@ export default async function AdminPage() {
           </form>
         </div>
       </header>
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="max-w-6xl mx-auto px-4 py-8 space-y-10">
         <AdminTable
           rows={rows.map((r) => ({
             id: r.id,
@@ -52,6 +61,17 @@ export default async function AdminPage() {
             totalQuestions: r.totalQuestions,
             mistakes: r.mistakes,
             createdAt: r.createdAt.toISOString(),
+          }))}
+        />
+
+        <AdminInProgressTable
+          totalCourses={courses.length}
+          rows={inProgressRows.map((p) => ({
+            id: p.id,
+            fullName: p.fullName,
+            department: p.department,
+            completedCount: p.completedCourseIds.length,
+            updatedAt: p.updatedAt.toISOString(),
           }))}
         />
       </main>
