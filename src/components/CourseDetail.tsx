@@ -20,6 +20,7 @@ export function CourseDetail({ course, onComplete, onBack }: CourseDetailProps) 
   const [quizStep, setQuizStep] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [answers, setAnswers] = useState<CourseQuizAnswer[]>([]);
+  const [finishing, setFinishing] = useState(false);
 
   const courseQuestions = course.quiz;
   const question = courseQuestions[quizStep];
@@ -34,12 +35,13 @@ export function CourseDetail({ course, onComplete, onBack }: CourseDetailProps) 
   const ExampleComponent = courseExamples[page.exampleKey];
 
   function handleQuizNext() {
-    if (selected === null) return;
+    if (selected === null || finishing) return;
     const nextAnswers = [
       ...answers,
       { questionId: question.id, chosenIndex: order[selected] },
     ];
     if (isLastQuestion) {
+      setFinishing(true);
       onComplete(nextAnswers);
       return;
     }
@@ -213,10 +215,14 @@ export function CourseDetail({ course, onComplete, onBack }: CourseDetailProps) 
             <button
               type="button"
               onClick={handleQuizNext}
-              disabled={selected === null}
+              disabled={selected === null || finishing}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 hover:bg-blue-700 hover:shadow-md disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed transition-all"
             >
-              {isLastQuestion ? "Завершити курс" : "Наступне питання"}
+              {finishing
+                ? "Зберігаємо…"
+                : isLastQuestion
+                  ? "Завершити курс"
+                  : "Наступне питання"}
               <span aria-hidden>→</span>
             </button>
           </div>

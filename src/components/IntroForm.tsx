@@ -14,6 +14,7 @@ export function IntroForm({ onStart }: IntroFormProps) {
   const [departmentSelect, setDepartmentSelect] = useState("");
   const [customDepartment, setCustomDepartment] = useState("");
   const [touched, setTouched] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const isOther = departmentSelect === OTHER_VALUE;
   const department = isOther ? customDepartment.trim() : departmentSelect;
@@ -22,7 +23,8 @@ export function IntroForm({ onStart }: IntroFormProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setTouched(true);
-    if (!isValid) return;
+    if (!isValid || submitting) return;
+    setSubmitting(true);
     onStart(fullName.trim(), department);
   }
 
@@ -36,7 +38,7 @@ export function IntroForm({ onStart }: IntroFormProps) {
           Перед початком вкажіть свої дані
         </h2>
         <p className="text-sm text-slate-500">
-          Потрібно для фіксації проходження інструктажу та видачі сертифіката.
+          Потрібно для фіксації проходження інструктажу.
         </p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -90,10 +92,11 @@ export function IntroForm({ onStart }: IntroFormProps) {
       </div>
       <button
         type="submit"
-        className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 hover:bg-blue-700 hover:shadow-md transition-all"
+        disabled={submitting}
+        className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 hover:bg-blue-700 hover:shadow-md disabled:opacity-60 disabled:shadow-none transition-all"
       >
-        Продовжити
-        <span aria-hidden>→</span>
+        {submitting ? "Перевірка…" : "Продовжити"}
+        {!submitting && <span aria-hidden>→</span>}
       </button>
     </form>
   );

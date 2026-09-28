@@ -32,7 +32,9 @@ export const attemptAnswers = pgTable("attempt_answers", {
 
 export const courseProgress = pgTable("course_progress", {
   id: serial("id").primaryKey(),
-  fullName: text("full_name").notNull(),
+  // Унікальність запобігає дублюванню рядка при паралельних запитах
+  // (наприклад, подвійний клік на кнопці "Продовжити"/"Завершити курс").
+  fullName: text("full_name").notNull().unique(),
   department: text("department").notNull(),
   completedCourseIds: jsonb("completed_course_ids")
     .notNull()

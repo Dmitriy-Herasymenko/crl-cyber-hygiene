@@ -55,30 +55,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Некоректні дані" }, { status: 400 });
   }
 
-  const [existing] = await db
-    .select()
-    .from(courseProgress)
-    .where(ilike(courseProgress.fullName, fullName.trim()))
-    .limit(1);
-
-  if (existing) {
-    await db
-      .update(courseProgress)
-      .set({
-        department: department.trim(),
-        completedCourseIds,
-        answers,
-        updatedAt: new Date(),
-      })
-      .where(ilike(courseProgress.fullName, fullName.trim()));
-  } else {
-    await db.insert(courseProgress).values({
+  // Атомарний upsert по fullName — уникає дублікатів при паралельних
+  // запитах (наприклад, подвійний клік користувача).
+  await db
+    .insert(courseProgress)
+    .values({
       fullName: fullName.trim(),
       department: department.trim(),
       completedCourseIds,
       answers,
+    })
+    .onConflictDoUpdate({
+      target: courseProgress.fullName,
+      set: {
+        department: department.trim(),
+        completedCourseIds,
+        answers,
+        updatedAt: new Date(),
+      },
     });
-  }
 
   return NextResponse.json({ ok: true });
 }

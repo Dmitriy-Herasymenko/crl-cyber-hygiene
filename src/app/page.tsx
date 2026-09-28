@@ -109,9 +109,26 @@ export default function Home() {
         }
       }
 
+      // Новий користувач — жодного прогресу ще немає. Створюємо порожній
+      // запис одразу, щоб людину було видно в адмінці навіть до того, як
+      // вона пройде перший курс.
       setCompletedCourseIds([]);
       setCourseAnswers({});
       setStep("courses");
+      try {
+        await fetch("/api/course-progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName: name,
+            department: dep,
+            completedCourseIds: [],
+            answers: {},
+          }),
+        });
+      } catch {
+        // Не критично — запис створиться пізніше, після першого курсу.
+      }
     } catch {
       setCompletedCourseIds([]);
       setCourseAnswers({});

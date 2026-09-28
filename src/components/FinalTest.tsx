@@ -15,6 +15,7 @@ export function FinalTest({ onFinish }: FinalTestProps) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<FinalTestAnswer[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
+  const [finishing, setFinishing] = useState(false);
 
   const question = questions[step];
   const { options: shuffledOptions, correctIndex: shuffledCorrectIndex, order } =
@@ -28,12 +29,13 @@ export function FinalTest({ onFinish }: FinalTestProps) {
   }
 
   function handleNext() {
-    if (selected === null) return;
+    if (selected === null || finishing) return;
     const nextAnswers = [
       ...answers,
       { questionId: question.id, chosenIndex: order[selected] },
     ];
     if (isLast) {
+      setFinishing(true);
       onFinish(nextAnswers);
       return;
     }
@@ -122,10 +124,14 @@ export function FinalTest({ onFinish }: FinalTestProps) {
         <button
           type="button"
           onClick={handleNext}
-          disabled={selected === null}
+          disabled={selected === null || finishing}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 hover:bg-blue-700 hover:shadow-md disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed transition-all"
         >
-          {isLast ? "Завершити тест" : "Наступне питання"}
+          {finishing
+            ? "Зберігаємо…"
+            : isLast
+              ? "Завершити тест"
+              : "Наступне питання"}
           <span aria-hidden>→</span>
         </button>
       </div>
