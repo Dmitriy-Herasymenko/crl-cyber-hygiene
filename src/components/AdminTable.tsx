@@ -106,11 +106,7 @@ export function AdminTable({ rows }: AdminTableProps) {
 
   return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-xs text-slate-500 mb-1">Пройшли інструктаж</p>
-          <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div className="bg-white rounded-xl border border-slate-200 p-4">
           <p className="text-xs text-slate-500 mb-1">Середній бал</p>
           <p className="text-2xl font-bold text-slate-900">{stats.avgScore}</p>

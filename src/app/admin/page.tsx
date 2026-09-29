@@ -33,6 +33,10 @@ export default async function AdminPage() {
     (p) => !completedNames.has(p.fullName.trim().toLowerCase())
   );
 
+  const completedPeopleCount = completedNames.size;
+  const inProgressPeopleCount = inProgressRows.length;
+  const totalPeopleCount = completedPeopleCount + inProgressPeopleCount;
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-200">
@@ -52,6 +56,27 @@ export default async function AdminPage() {
         </div>
       </header>
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
+            <p className="text-xs text-slate-500 mb-1">Всього людей</p>
+            <p className="text-2xl font-bold text-slate-900">
+              {totalPeopleCount}
+            </p>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
+            <p className="text-xs text-slate-500 mb-1">Завершили інструктаж</p>
+            <p className="text-2xl font-bold text-green-600">
+              {completedPeopleCount}
+            </p>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
+            <p className="text-xs text-slate-500 mb-1">В процесі проходження</p>
+            <p className="text-2xl font-bold text-amber-600">
+              {inProgressPeopleCount}
+            </p>
+          </div>
+        </div>
+
         <AdminTable
           rows={rows.map((r) => ({
             id: r.id,
