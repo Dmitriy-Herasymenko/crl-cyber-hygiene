@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 
 type Row = {
   id: number;
@@ -24,14 +25,6 @@ function formatDate(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(iso));
-}
-
-function escapeCsv(value: string | number) {
-  const str = String(value);
-  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
 }
 
 export function AdminTable({ rows }: AdminTableProps) {
@@ -69,37 +62,73 @@ export function AdminTable({ rows }: AdminTableProps) {
     return { total, avgScore, totalMistakes };
   }, [filteredRows]);
 
-  function handleExportCsv() {
-    const header = [
-      "ПІБ",
-      "Відділення",
-      "Бал",
-      "Всього питань",
-      "Помилок",
-      "Дата проходження",
-    ];
-    const lines = filteredRows.map((r) =>
-      [
-        r.fullName,
-        r.department,
-        r.score,
-        r.totalQuestions,
-        r.mistakes,
-        formatDate(r.createdAt),
-      ]
-        .map(escapeCsv)
-        .join(",")
+  async function handleExportDocx() {
+    // Експорт завжди по всіх даних, незалежно від пошуку/фільтра відділення
+    // в таблиці на екрані.
+    const grouped = new Map<string, Row[]>();
+    for (const r of rows) {
+      if (!grouped.has(r.department)) grouped.set(r.department, []);
+      grouped.get(r.department)!.push(r);
+    }
+    const departmentNames = Array.from(grouped.keys()).sort((a, b) =>
+      a.localeCompare(b, "uk")
     );
-    const csv = [header.join(","), ...lines].join("\n");
-    const blob = new Blob(["﻿" + csv], {
-      type: "text/csv;charset=utf-8;",
-    });
+
+    const children: Paragraph[] = [
+      new Paragraph({
+        text: "Результати проходження інструктажу з кібербезпеки",
+        heading: HeadingLevel.TITLE,
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: `Сформовано: ${formatDate(new Date().toISOString())}`,
+            italics: true,
+            color: "666666",
+          }),
+        ],
+        spacing: { after: 300 },
+      }),
+    ];
+
+    for (const dep of departmentNames) {
+      children.push(
+        new Paragraph({
+          text: dep,
+          heading: HeadingLevel.HEADING_1,
+          spacing: { before: 300, after: 150 },
+        })
+      );
+
+      const docs = [...grouped.get(dep)!].sort((a, b) =>
+        a.fullName.localeCompare(b.fullName, "uk")
+      );
+
+      docs.forEach((r, i) => {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: `${i + 1}. ${r.fullName}`, bold: true }),
+              new TextRun({
+                text: ` — ${r.score}/${r.totalQuestions} балів (${r.mistakes} ${
+                  r.mistakes === 1 ? "помилка" : "помилок"
+                }), пройдено ${formatDate(r.createdAt)}`,
+              }),
+            ],
+            spacing: { after: 80 },
+          })
+        );
+      });
+    }
+
+    const doc = new Document({ sections: [{ children }] });
+    const blob = await Packer.toBlob(doc);
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `cyber-hygiene-results-${new Date()
       .toISOString()
-      .slice(0, 10)}.csv`;
+      .slice(0, 10)}.docx`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -141,10 +170,10 @@ export function AdminTable({ rows }: AdminTableProps) {
         </select>
         <button
           type="button"
-          onClick={handleExportCsv}
+          onClick={handleExportDocx}
           className="sm:ml-auto inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
-          Експорт у CSV
+          Експорт
         </button>
       </div>
 
